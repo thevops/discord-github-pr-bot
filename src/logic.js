@@ -26,15 +26,17 @@ async function findThreadByPR(channel, prNumber) {
 }
 
 // Handle GitHub webhook payload
-export async function handleGitHubWebhook(discordClient, discordChannelId, payload) {
+export async function handleGitHubWebhook(discordClient, discordChannelId, payload, headers) {
+  const event = headers['x-github-event'];
+  const action = payload.action;
+
   if (!payload.pull_request) {
-    console.log(`action="${payload.action}" msg="Ignoring non-PR event"`);
+    console.log(`event="${event}" action="${action}" msg="Ignoring non-PR event"`);
     return { success: true, message: 'Ignored non-PR event' };
   } else {
-    console.log(`action="${payload.action}" pull_request=${payload.pull_request.number} msg="Processing event"`);
+    console.log(`event="${event}" action="${action}" pull_request=${payload.pull_request.number} msg="Processing event"`);
   }
 
-  const action = payload.action;
   const prNumber = payload.pull_request.number;
   const prTitle = payload.pull_request.title;
   const prUrl = payload.pull_request.html_url;
@@ -42,7 +44,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
   const prAuthor = payload.pull_request.user.login;
   const prReviewers = payload.pull_request.requested_reviewers.map(reviewer => reviewer.login);
   const eventUrl = payload.review.html_url;
-  const actionSender = payload.sender.login;
+  const eventSender = payload.sender.login;
 
   try {
     // Fetch Discord channel
@@ -66,7 +68,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
 
     // Send message to thread
     const embed = new EmbedBuilder()
-      .setTitle(`Action ${action} by ${actionSender}`)
+      .setTitle(`${event}(${action}) by ${eventSender}`)
       .setURL(eventUrl)
       .setColor(9807270)
       .addFields(

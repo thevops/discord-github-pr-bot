@@ -23,7 +23,8 @@ app.get('/', (_, res) => {
 // GitHub webhook endpoint
 app.post('/webhook', async (req, res) => {
   const payload = req.body;
-  const result = await handleGitHubWebhook(discordClient, discordChannelId, payload);
+  const headers = req.headers;
+  const result = await handleGitHubWebhook(discordClient, discordChannelId, payload, headers);
 
   if (result.success) {
     res.status(200).send(result.message);
