@@ -62,7 +62,6 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
         name: `${prNumber}: ${prTitle}`,
         autoArchiveDuration: 1440*3, // 3 days
       });
-      await thread.send('🏓 <@798949927648493588>')
     }
 
     // Send message to thread
