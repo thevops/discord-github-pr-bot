@@ -10,7 +10,7 @@ RUN apk add --no-cache tini
 COPY package*.json ./
 RUN npm ci --only=production
 
-COPY . .
+COPY ./src/ ./
 
 ENV NODE_ENV=production
 

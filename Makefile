@@ -2,7 +2,7 @@ docker-build: ## Build Docker
 	docker build -t discord-github-pr-bot .
 
 docker-run: ## Run Docker
-	docker run --rm -it discord-github-pr-bot
+	docker run --rm -it --env-file .env discord-github-pr-bot
 
 local-run: ## Run locally
 	node server.js
