@@ -15,6 +15,11 @@ const discordChannelId = process.env.DISCORD_CHANNEL_ID;
 // Set port from environment or default
 const port = process.env.PORT || 3000;
 
+// Health Check endpoint
+app.get('/', (_, res) => {
+  res.status(200).send('Ok');
+});
+
 // GitHub webhook endpoint
 app.post('/webhook', async (req, res) => {
   const payload = req.body;
