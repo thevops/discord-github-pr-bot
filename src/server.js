@@ -2,6 +2,7 @@ import express, { json } from 'express';
 import { initializeDiscord, handleGitHubWebhook } from './logic.js';
 import dotenv from 'dotenv';
 import { log } from './utils.js';
+import { Config } from './config.js';
 
 dotenv.config();
 
@@ -14,11 +15,11 @@ const discordClient = await initializeDiscord(process.env.DISCORD_BOT_TOKEN);
 const discordChannelId = process.env.DISCORD_CHANNEL_ID;
 
 // Set port from environment or default
-const port = process.env.PORT || 3000;
+const port = Config.port || 3000;
 
 // Health Check endpoint
 app.get('/', (_, res) => {
-  res.status(200).send('Ok');
+  res.status(200).send({"status": "ok"});
 });
 
 // GitHub webhook endpoint
@@ -28,9 +29,9 @@ app.post('/webhook', async (req, res) => {
   const result = await handleGitHubWebhook(discordClient, discordChannelId, payload, headers);
 
   if (result.success) {
-    res.status(200).send(result.message);
+    res.status(200).send({"status": result.success, "message": result.message});
   } else {
-    res.status(500).send(result.message);
+    res.status(500).send({"status": result.success, "message": result.message});
   }
 });
 
@@ -39,7 +40,7 @@ async function startServer() {
   try {
     // Start Express server
     app.listen(port, () => {
-      log(`Webhook server listening on port ${port}`);
+      log(`msg="Webhook server listening on port ${port}"`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

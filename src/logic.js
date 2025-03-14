@@ -1,5 +1,6 @@
 import { Client, GatewayIntentBits, ChannelType, EmbedBuilder } from 'discord.js';
 import { log } from './utils.js';
+import { Config } from './config.js';
 
 // Initialize the Discord client
 export async function initializeDiscord(discordBotToken) {
@@ -8,10 +9,10 @@ export async function initializeDiscord(discordBotToken) {
   });
 
   client.once('ready', () => {
-    log(`Logged in as ${client.user.tag}`);
+    log(`msg="Logged in as ${client.user.tag}"`);
     // Log all servers (guilds) the bot is connected to
     client.guilds.cache.forEach(guild => {
-      log(`Connected to server: ${guild.name} (ID: ${guild.id})`);
+      log(`msg="Connected to server: ${guild.name} (ID: ${guild.id})"`);
     });
   });
 
@@ -30,10 +31,41 @@ async function findThreadByPR(channel, prNumber) {
   return allThreads.find(thread => thread.name.startsWith(`${prNumber}:`));
 }
 
+async function filterEventsAndActions(event, action) {
+  // Check if the event exists in supported_events_actions
+  if (event in Config.supported_events_actions) {
+    const supportedActions = Config.supported_events_actions[event];
+
+    // If supportedActions is empty array, accept all actions for this event
+    if (Array.isArray(supportedActions) && supportedActions.length === 0) {
+      return true;
+    }
+
+    // If supportedAction is null, ignore this event
+    if (supportedActions === null) {
+      return false;
+    }
+
+    // Otherwise check if the specific action is in the list
+    if (Array.isArray(supportedActions) && supportedActions.includes(action)) {
+      return true;
+    }
+  }
+
+  // If we get here, either the event isn't supported or the action isn't supported for this event
+  return false;
+}
+
 // Handle GitHub webhook payload
 export async function handleGitHubWebhook(discordClient, discordChannelId, payload, headers) {
   const event = headers['x-github-event'];
   const action = payload.action;
+
+  // Filter supported events and actions
+  if (!await filterEventsAndActions(event, action)) {
+    log(`event="${event}" action="${action}" msg="Ignoring unsupported event/action"`);
+    return { success: true, message: 'Ignored unsupported event/action' };
+  }
 
   if (!payload.pull_request) {
     log(`event="${event}" action="${action}" msg="Ignoring non-PR event"`);
