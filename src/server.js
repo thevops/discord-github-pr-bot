@@ -1,6 +1,7 @@
 import express, { json } from 'express';
 import { initializeDiscord, handleGitHubWebhook } from './logic.js';
 import dotenv from 'dotenv';
+import { log } from './utils.js';
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ async function startServer() {
   try {
     // Start Express server
     app.listen(port, () => {
-      console.log(`Webhook server listening on port ${port}`);
+      log(`Webhook server listening on port ${port}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

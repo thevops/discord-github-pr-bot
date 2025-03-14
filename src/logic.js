@@ -1,4 +1,5 @@
 import { Client, GatewayIntentBits, ChannelType, EmbedBuilder } from 'discord.js';
+import { log } from './utils.js';
 
 // Initialize the Discord client
 export async function initializeDiscord(discordBotToken) {
@@ -7,7 +8,11 @@ export async function initializeDiscord(discordBotToken) {
   });
 
   client.once('ready', () => {
-    console.log(`Logged in as ${client.user.tag}`);
+    log(`Logged in as ${client.user.tag}`);
+    // Log all servers (guilds) the bot is connected to
+    client.guilds.cache.forEach(guild => {
+      log(`Connected to server: ${guild.name} (ID: ${guild.id})`);
+    });
   });
 
   await client.login(discordBotToken);
@@ -31,10 +36,10 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
   const action = payload.action;
 
   if (!payload.pull_request) {
-    console.log(`event="${event}" action="${action}" msg="Ignoring non-PR event"`);
+    log(`event="${event}" action="${action}" msg="Ignoring non-PR event"`);
     return { success: true, message: 'Ignored non-PR event' };
   } else {
-    console.log(`event="${event}" action="${action}" pull_request=${payload.pull_request.number} msg="Processing event"`);
+    log(`event="${event}" action="${action}" pull_request=${payload.pull_request.number} msg="Processing event"`);
   }
 
   const prNumber = payload.pull_request.number;
@@ -42,6 +47,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
   const prUrl = payload.pull_request.html_url;
   const prBranch = payload.pull_request.head.ref;
   const prAuthor = payload.pull_request.user.login;
+  const repository = payload.repo.full_name;
   const prReviewers = payload.pull_request.requested_reviewers.map(reviewer => reviewer.login);
   const eventSender = payload.sender.login;
 
@@ -71,10 +77,11 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
       .setURL(prUrl)
       .setColor(9807270)
       .addFields(
-        { name: 'Pull Request', value: `${prUrl}`},
-        { name: 'Branch', value: `${prBranch}`, inline: true },
-        { name: 'Author', value: `${prAuthor}`, inline: true },
-        { name: 'Reviewers', value: `${prReviewers.join(', ')}` },
+      { name: 'Pull Request', value: `${prUrl}` },
+      { name: 'Repository', value: `${repository}`, inline: true },
+      { name: 'Branch', value: `${prBranch}`, inline: true },
+      { name: 'Author', value: `${prAuthor}`, inline: true },
+      { name: 'Reviewers', value: `${prReviewers.join(', ')}`, inline: true }
       );
 
     await thread.send({ embeds: [embed] });

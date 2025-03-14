@@ -5,15 +5,16 @@
 
 1. Open https://discord.com/developers/applications/
 2. Click `New Application`.
-3. Go to `Bot` section and enable `Message Content Intent`.
+3. Go to `Bot` section, enable `Message Content Intent` and disable `Public Bot`.
 4. Click `Reset token` and copy the token.
-5. Go to `Installation` section.
-6. Scroll down to `Guild Install`.
+5. Go to `Installation` section, and set `None` for `Install Link`.
+6. Go to `OAuth2` section.
 7. Select:
-    - scopes: `applications.commands` and `bot`
-    - permissions: `Create Private Threads`, `Create Public Threads`, `Manage Threads`, `Send Messages`, `Send Messages in Threads`.
+    - scopes: `bot`,
+    - bot permissions: `Create Private Threads`, `Create Public Threads`, `Manage Threads`, `Send Messages`, `Send Messages in Threads`,
+    - integration type: `Guild Install`.
 8. Click `Save Changes`.
-9. Copy link provided in the above section `Install Link`.
+9. Copy link provided below the scopes and permissions.
 10. Open the link and add the bot to your Discord server.
 
 
