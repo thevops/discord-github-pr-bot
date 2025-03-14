@@ -43,7 +43,6 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
   const prBranch = payload.pull_request.head.ref;
   const prAuthor = payload.pull_request.user.login;
   const prReviewers = payload.pull_request.requested_reviewers.map(reviewer => reviewer.login);
-  const eventUrl = payload.review.html_url;
   const eventSender = payload.sender.login;
 
   try {
@@ -69,7 +68,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
     // Send message to thread
     const embed = new EmbedBuilder()
       .setTitle(`${event}(${action}) by ${eventSender}`)
-      .setURL(eventUrl)
+      .setURL(prUrl)
       .setColor(9807270)
       .addFields(
         { name: 'Pull Request', value: `${prUrl}`},
