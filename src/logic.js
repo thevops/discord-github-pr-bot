@@ -47,7 +47,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
   const prUrl = payload.pull_request.html_url;
   const prBranch = payload.pull_request.head.ref;
   const prAuthor = payload.pull_request.user.login;
-  const repository = payload.repo.full_name;
+  const repository = payload.repository.full_name;
   const prReviewers = payload.pull_request.requested_reviewers.map(reviewer => reviewer.login);
   const eventSender = payload.sender.login;
 
