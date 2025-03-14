@@ -14,9 +14,6 @@ app.use(json());
 const discordClient = await initializeDiscord(process.env.DISCORD_BOT_TOKEN);
 const discordChannelId = process.env.DISCORD_CHANNEL_ID;
 
-// In-memory cache for storing opened threads
-const activePRThreads = new Map();
-
 // Set port from environment or default
 const port = Config.port || 3000;
 
@@ -29,7 +26,7 @@ app.get('/', (_, res) => {
 app.post('/webhook', async (req, res) => {
   const payload = req.body;
   const headers = req.headers;
-  const result = await handleGitHubWebhook(discordClient, discordChannelId, payload, headers, activePRThreads);
+  const result = await handleGitHubWebhook(discordClient, discordChannelId, payload, headers);
 
   if (result.success) {
     res.status(200).send({ "status": result.success, "message": result.message });

@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits, ChannelType, EmbedBuilder } from 'discord.js';
 import { log } from './utils.js';
-import { Config } from './config.js';
+import { Config, InMemoryCache } from './config.js';
 
 // Initialize the Discord client
 export async function initializeDiscord(discordBotToken) {
@@ -30,16 +30,16 @@ async function findThreadByPR(channel, prNumber, cacheKey) {
 
   const thread = allThreads.find(thread => thread.name.startsWith(`${prNumber}:`));
   if (thread) {
-    log(`msg="Found existing thread for ${cacheKey} (stateless)"`);
+    log(`pull_request=${prNumber} msg="Found existing thread for ${cacheKey} (stateless)"`);
     return thread;
   } else {
     return null;
   }
 }
 
-async function findThreadInCache(activePRThreads, cacheKey) {
-  if (activePRThreads.has(cacheKey)) {
-    const threadId = activePRThreads.get(cacheKey);
+async function findThreadInCache(cacheKey) {
+  if (InMemoryCache.has(cacheKey)) {
+    const threadId = InMemoryCache.get(cacheKey);
     log(`msg="Found existing thread for ${cacheKey} (cache)"`);
     return threadId;
   }
@@ -73,7 +73,7 @@ async function filterEventsAndActions(event, action) {
 }
 
 // Handle GitHub webhook payload
-export async function handleGitHubWebhook(discordClient, discordChannelId, payload, headers, activePRThreads) {
+export async function handleGitHubWebhook(discordClient, discordChannelId, payload, headers) {
   const event = headers['x-github-event'];
   const action = payload.action;
 
@@ -112,7 +112,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
     const cacheKey = `${repository}:${prNumber}`;
 
     // Try to find thread ID in cache first
-    const threadId = await findThreadInCache(activePRThreads, cacheKey);
+    const threadId = await findThreadInCache(cacheKey);
     if (threadId) {
       thread = await discordChannel.threads.fetch(threadId).catch(() => null);
     }
@@ -122,7 +122,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
       thread = await findThreadByPR(discordChannel, prNumber, cacheKey);
       // Update the cache if thread was found by searching through threads
       if (thread) {
-        activePRThreads.set(cacheKey, thread.id);
+        InMemoryCache.set(cacheKey, thread.id);
       }
     }
 
@@ -133,8 +133,8 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
         name: `${prNumber}: ${prTitle}`,
         autoArchiveDuration: 1440 * 3, // 3 days
       });
-      activePRThreads.set(cacheKey, thread.id);
-      log(`msg="Created new thread for ${cacheKey}"`);
+      InMemoryCache.set(cacheKey, thread.id);
+      log(`pull_request=${prNumber} msg="Created new thread for ${cacheKey}"`);
     }
 
     // Send message to thread
@@ -151,7 +151,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
       );
 
     await thread.send({ embeds: [embed] });
-    log(`msg="Sent message to thread for ${cacheKey}"`);
+    log(`pull_request=${prNumber} msg="Sent message to thread for ${cacheKey}"`);
 
     return { success: true, message: 'Ok' };
   } catch (error) {

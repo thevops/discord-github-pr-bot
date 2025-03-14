@@ -2,7 +2,7 @@ function createTestData(actionArg) {
   return {
     action: actionArg,
     pull_request: {
-      number: 128,
+      number: 130,
       title: 'Test PR Title',
       html_url: 'https://github.com/user/repo/pull/127',
       head: {
@@ -56,8 +56,8 @@ async function runTests() {
     for (const action of events_actions_map[event]) {
       console.log(`Event: ${event}, action: ${action}`);
       await sendTestRequest(event, createTestData(action));
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
-      console.log('---');
+      // await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+      // console.log('---');
     }
   }
 }
