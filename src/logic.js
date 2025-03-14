@@ -153,6 +153,13 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
     await thread.send({ embeds: [embed] });
     log(`pull_request=${prNumber} msg="Sent message to thread for ${cacheKey}"`);
 
+    if (action === "closed") {
+      InMemoryCache.delete(cacheKey);
+      log(`pull_request=${prNumber} msg="Deleted thread for ${cacheKey}"`);
+      await thread.setArchived(true);
+      log(`pull_request=${prNumber} msg="Archived thread for ${cacheKey}"`);
+    }
+
     return { success: true, message: 'Ok' };
   } catch (error) {
     console.error('Error handling webhook:', error);
