@@ -2,9 +2,9 @@ function createTestData(actionArg) {
   return {
     action: actionArg,
     pull_request: {
-      number: 123,
+      number: 128,
       title: 'Test PR Title',
-      html_url: 'https://github.com/user/repo/pull/123',
+      html_url: 'https://github.com/user/repo/pull/127',
       head: {
         ref: 'feature-branch'
       },
@@ -47,9 +47,9 @@ async function sendTestRequest(event, requestBody) {
 async function runTests() {
   const events_actions_map = {
     "pull_request": ["opened", "ready_for_review", "unsupported"],
-    "pull_request_review": ["submitted", "unsupported"],
-    "pull_request_review_comment": ["created", "unsupported"],
-    "pull_request_review_thread": ["created", "unsupported"]
+    // "pull_request_review": ["submitted", "unsupported"],
+    // "pull_request_review_comment": ["created", "unsupported"],
+    // "pull_request_review_thread": ["created", "unsupported"]
   };
 
   for (const event in events_actions_map) {

@@ -14,24 +14,27 @@ app.use(json());
 const discordClient = await initializeDiscord(process.env.DISCORD_BOT_TOKEN);
 const discordChannelId = process.env.DISCORD_CHANNEL_ID;
 
+// In-memory cache for storing opened threads
+const activePRThreads = new Map();
+
 // Set port from environment or default
 const port = Config.port || 3000;
 
 // Health Check endpoint
 app.get('/', (_, res) => {
-  res.status(200).send({"status": "ok"});
+  res.status(200).send({ "status": "ok" });
 });
 
 // GitHub webhook endpoint
 app.post('/webhook', async (req, res) => {
   const payload = req.body;
   const headers = req.headers;
-  const result = await handleGitHubWebhook(discordClient, discordChannelId, payload, headers);
+  const result = await handleGitHubWebhook(discordClient, discordChannelId, payload, headers, activePRThreads);
 
   if (result.success) {
-    res.status(200).send({"status": result.success, "message": result.message});
+    res.status(200).send({ "status": result.success, "message": result.message });
   } else {
-    res.status(500).send({"status": result.success, "message": result.message});
+    res.status(500).send({ "status": result.success, "message": result.message });
   }
 });
 

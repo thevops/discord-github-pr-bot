@@ -22,13 +22,29 @@ export async function initializeDiscord(discordBotToken) {
 }
 
 // Helper function to find thread by PR number
-async function findThreadByPR(channel, prNumber) {
+async function findThreadByPR(channel, prNumber, cacheKey) {
   const activeThreads = await channel.threads.fetchActive();
   const archivedThreads = await channel.threads.fetchArchived();
 
   const allThreads = [...activeThreads.threads.values(), ...archivedThreads.threads.values()];
 
-  return allThreads.find(thread => thread.name.startsWith(`${prNumber}:`));
+  const thread = allThreads.find(thread => thread.name.startsWith(`${prNumber}:`));
+  if (thread) {
+    log(`msg="Found existing thread for ${cacheKey} (stateless)"`);
+    return thread;
+  } else {
+    return null;
+  }
+}
+
+async function findThreadInCache(activePRThreads, cacheKey) {
+  if (activePRThreads.has(cacheKey)) {
+    const threadId = activePRThreads.get(cacheKey);
+    log(`msg="Found existing thread for ${cacheKey} (cache)"`);
+    return threadId;
+  }
+
+  return null;
 }
 
 async function filterEventsAndActions(event, action) {
@@ -57,7 +73,7 @@ async function filterEventsAndActions(event, action) {
 }
 
 // Handle GitHub webhook payload
-export async function handleGitHubWebhook(discordClient, discordChannelId, payload, headers) {
+export async function handleGitHubWebhook(discordClient, discordChannelId, payload, headers, activePRThreads) {
   const event = headers['x-github-event'];
   const action = payload.action;
 
@@ -91,16 +107,34 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
       return { success: false, message: 'Invalid Discord channel ID' };
     }
 
-    // Find existing thread (stateless approach)
-    let thread = await findThreadByPR(discordChannel, prNumber);
+    // Find thread
+    let thread = null;
+    const cacheKey = `${repository}:${prNumber}`;
+
+    // Try to find thread ID in cache first
+    const threadId = await findThreadInCache(activePRThreads, cacheKey);
+    if (threadId) {
+      thread = await discordChannel.threads.fetch(threadId).catch(() => null);
+    }
+
+    // If not found in cache or fetching failed, search through threads
+    if (!thread) {
+      thread = await findThreadByPR(discordChannel, prNumber, cacheKey);
+      // Update the cache if thread was found by searching through threads
+      if (thread) {
+        activePRThreads.set(cacheKey, thread.id);
+      }
+    }
 
     // Create thread if doesn't exist
     if (!thread) {
       const message = await discordChannel.send(`🚀 New thread for ${repository} [#${prNumber}: ${prTitle}](${prUrl})`);
       thread = await message.startThread({
         name: `${prNumber}: ${prTitle}`,
-        autoArchiveDuration: 1440*3, // 3 days
+        autoArchiveDuration: 1440 * 3, // 3 days
       });
+      activePRThreads.set(cacheKey, thread.id);
+      log(`msg="Created new thread for ${cacheKey}"`);
     }
 
     // Send message to thread
@@ -109,14 +143,15 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
       .setURL(prUrl)
       .setColor(9807270)
       .addFields(
-      { name: 'Pull Request', value: `${prUrl}` },
-      { name: 'Repository', value: `${repository}`, inline: true },
-      { name: 'Branch', value: `${prBranch}`, inline: true },
-      { name: 'Author', value: `${prAuthor}`, inline: true },
-      { name: 'Reviewers', value: `${prReviewers.join(', ')}`, inline: true }
+        { name: 'Pull Request', value: `${prUrl}` },
+        { name: 'Repository', value: `${repository}`, inline: true },
+        { name: 'Branch', value: `${prBranch}`, inline: true },
+        { name: 'Author', value: `${prAuthor}`, inline: true },
+        { name: 'Reviewers', value: `${prReviewers.join(', ')}`, inline: true }
       );
 
     await thread.send({ embeds: [embed] });
+    log(`msg="Sent message to thread for ${cacheKey}"`);
 
     return { success: true, message: 'Ok' };
   } catch (error) {
