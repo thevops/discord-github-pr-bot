@@ -64,7 +64,7 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
 
     // Create thread if doesn't exist
     if (!thread) {
-      const message = await discordChannel.send(`🚀 New thread for PR ${prNumber}: [${prTitle}](${prUrl})`);
+      const message = await discordChannel.send(`🚀 New thread for ${repository} [#${prNumber}: ${prTitle}](${prUrl})`);
       thread = await message.startThread({
         name: `${prNumber}: ${prTitle}`,
         autoArchiveDuration: 1440*3, // 3 days
