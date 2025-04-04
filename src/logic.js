@@ -77,6 +77,12 @@ export async function handleGitHubWebhook(discordClient, discordChannelId, paylo
   const event = headers['x-github-event'];
   const action = payload.action;
 
+  // Filter draft PRs
+  if (payload.pull_request.draft) {
+    log(`event="${event}" action="${action}" msg="Ignoring draft PR"`);
+    return { success: true, message: 'Ignored draft PR' };
+  }
+
   // Filter supported events and actions
   if (!await filterEventsAndActions(event, action)) {
     log(`event="${event}" action="${action}" msg="Ignoring unsupported event/action"`);
